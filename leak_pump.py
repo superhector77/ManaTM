@@ -6,7 +6,7 @@ Monitors a leak sensor on GPIO4 and controls the bilge pump accordingly.
 Requires: rudder_motor_pump.py in the same directory
 """
 
-import RPi.GPIO as GPIO
+from gpiozero import Button
 import time
 from rudder_motor_pump import init, set_pump, stop_all
 
@@ -14,19 +14,14 @@ LEAK_SENSOR_PIN = 4
 POLL_INTERVAL = 0.5  # seconds between sensor checks
 
 def main():
-    # GPIO setup
-    GPIO.setmode(GPIO.BCM)
-    GPIO.setup(LEAK_SENSOR_PIN, GPIO.IN)
+    leak_sensor = Button(LEAK_SENSOR_PIN, pull_up=False)
 
-    # Initialise the pHAT and pump
     init()
     print("Leak monitor started...")
 
     try:
         while True:
-            leak_detected = GPIO.input(LEAK_SENSOR_PIN)
-
-            if leak_detected:
+            if leak_sensor.is_pressed:
                 print("Leak detected! Pump ON")
                 set_pump(True)
             else:
@@ -39,7 +34,6 @@ def main():
 
     finally:
         stop_all()
-        GPIO.cleanup()
         print("Done.")
 
 if __name__ == "__main__":

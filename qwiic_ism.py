@@ -1,119 +1,99 @@
-#!/usr/bin/env python3
-"""
-imu_read.py
------------
-Reads all 9DOF data from the SparkFun ISM330DHCX + MMC5983MA breakout.
-    - ISM330DHCX: accelerometer (g) + gyroscope (dps)
-    - MMC5983MA:  magnetometer (gauss)
+#!/usr/bin/env python
+#-------------------------------------------------------------------------------
+# qwiic_ism330dhcx_ex1_basic.py
+#
+# This example shows the basic settings and functions for retrieving accelerometer and gyroscopic data
+#-------------------------------------------------------------------------------
+# Written by SparkFun Electronics, January 2025
+#
+# This python library supports the SparkFun Electroncis Qwiic ecosystem
+#
+# More information on Qwiic is at https://www.sparkfun.com/qwiic
+#
+# Do you like this library? Help support SparkFun. Buy a board!
+#===============================================================================
+# Copyright (c) 2024 SparkFun Electronics
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy 
+# of this software and associated documentation files (the "Software"), to deal 
+# in the Software without restriction, including without limitation the rights 
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell 
+# copies of the Software, and to permit persons to whom the Software is 
+# furnished to do so, subject to the following conditions:
+#
+# The above copyright notice and this permission notice shall be included in all 
+# copies or substantial portions of the Software.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE 
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER 
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, 
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE 
+# SOFTWARE.
+#===============================================================================
 
-Requires: pip install sparkfun-qwiic-ism330dhcx sparkfun-qwiic-mmc5983ma
-"""
-
+import qwiic_ism330dhcx
 import sys
 import time
-import qwiic_ism330dhcx
-import qwiic_mmc5983ma
 
-POLL_INTERVAL = 0.1  # seconds between readings (10 Hz)
+def runExample():
+	print("\nQwiic ISM330DHCX Example 1 - Basic Readings\n")
 
+	# Create instance of device
+	myIsm = qwiic_ism330dhcx.QwiicISM330DHCX()
 
-def init_imu():
-    imu = qwiic_ism330dhcx.QwiicISM330DHCX(address=0x6B)
-    if not imu.is_connected():
-        print("ISM330DHCX not found — check wiring and i2cdetect", file=sys.stderr)
-        sys.exit(1)
+	# Check if it's connected
+	if myIsm.is_connected() == False:
+		print("The device isn't connected to the system. Please check your connection", \
+			file=sys.stderr)
+		return
 
-    imu.begin()
-    imu.device_reset()
-    while imu.get_device_reset() == False:
-        time.sleep(1)
+	myIsm.begin()
+	# Reset the device to default settings. This if helpful is you're doing multiple
+	# uploads testing different settings. 
+	myIsm.device_reset()
 
-    time.sleep(0.1)
-    imu.set_device_config()
-    imu.set_block_data_update()
+	# Wait for it to finish resetting
+	while myIsm.get_device_reset() == False:
+		time.sleep(1)
 
-    # Accelerometer: 104 Hz, ±4g, with low-pass filter
-    imu.set_accel_data_rate(imu.kXlOdr104Hz)
-    imu.set_accel_full_scale(imu.kXlFs4g)
-    imu.set_accel_filter_lp2()
-    imu.set_accel_slope_filter(imu.kLpOdrDiv100)
+	print("Reset.")
+	print("Applying settings.")
+	time.sleep(0.100)
 
-    # Gyroscope: 104 Hz, ±500 dps, with low-pass filter
-    imu.set_gyro_data_rate(imu.kGyroOdr104Hz)
-    imu.set_gyro_full_scale(imu.kGyroFs500dps)
-    imu.set_gyro_filter_lp1()
-    imu.set_gyro_lp1_bandwidth(imu.kBwMedium)
+	myIsm.set_device_config()
+	myIsm.set_block_data_update()
 
-    print("ISM330DHCX initialised")
-    return imu
+	# Set the output data rate and precision of the accelerometer
+	myIsm.set_accel_data_rate(myIsm.kXlOdr104Hz)
+	myIsm.set_accel_full_scale(myIsm.kXlFs4g)
 
+	# Set the output data rate and precision of the gyroscope
+	myIsm.set_gyro_data_rate(myIsm.kGyroOdr104Hz)
+	myIsm.set_gyro_full_scale(myIsm.kGyroFs500dps)
 
-def init_mag():
-    mag = qwiic_mmc5983ma.QwiicMMC5983MA()
-    if not mag.is_connected():
-        print("MMC5983MA not found — check wiring and i2cdetect", file=sys.stderr)
-        sys.exit(1)
-    mag.begin()
-    print("MMC5983MA initialised")
-    return mag
+	# Turn on the accelerometer's filter and apply settings
+	myIsm.set_accel_filter_lp2()
+	myIsm.set_accel_slope_filter(myIsm.kLpOdrDiv100)
 
+	# Turn on the gyroscope's filter and apply settings
+	myIsm.set_gyro_filter_lp1()
+	myIsm.set_gyro_lp1_bandwidth(myIsm.kBwMedium)
 
-def read_imu(imu):
-    accel = imu.get_accel()
-    gyro  = imu.get_gyro()
-    return {
-        "accel_x": accel.xData,
-        "accel_y": accel.yData,
-        "accel_z": accel.zData,
-        "gyro_x":  gyro.xData,
-        "gyro_y":  gyro.yData,
-        "gyro_z":  gyro.zData,
-    }
+	while True:
+		if myIsm.check_status():
+			# Get the accelerometer data
+			accelData = myIsm.get_accel()
+			print("Accel X: %f, Y: %f, Z: %f " % (accelData.xData, accelData.yData, accelData.zData), end='')
+			gyroData = myIsm.get_gyro()
+			print("Gyro X: %f, Y: %f, Z: %f" % (gyroData.xData, gyroData.yData, gyroData.zData))
+		
+		time.sleep(0.100) # Delay so that we don't spam user console or I2C bus
 
-
-def read_mag(mag):
-    return {
-        "mag_x": mag.get_measurement_x(),
-        "mag_y": mag.get_measurement_y(),
-        "mag_z": mag.get_measurement_z(),
-    }
-
-
-def print_data(imu_data, mag_data):
-    print(
-        f"Accel (g)      "
-        f"X: {imu_data['accel_x']:8.3f}  "
-        f"Y: {imu_data['accel_y']:8.3f}  "
-        f"Z: {imu_data['accel_z']:8.3f}"
-    )
-    print(
-        f"Gyro  (dps)    "
-        f"X: {imu_data['gyro_x']:8.3f}  "
-        f"Y: {imu_data['gyro_y']:8.3f}  "
-        f"Z: {imu_data['gyro_z']:8.3f}"
-    )
-    print(
-        f"Mag   (gauss)  "
-        f"X: {mag_data['mag_x']:8.3f}  "
-        f"Y: {mag_data['mag_y']:8.3f}  "
-        f"Z: {mag_data['mag_z']:8.3f}"
-    )
-    print("-" * 60)
-
-
-if __name__ == "__main__":
-    print("Initialising IMU...")
-    imu = init_imu()
-    mag = init_mag()
-    print("Reading — Ctrl+C to stop\n")
-
-    try:
-        while True:
-            if imu.check_status():
-                imu_data = read_imu(imu)
-                mag_data  = read_mag(mag)
-                print_data(imu_data, mag_data)
-            time.sleep(POLL_INTERVAL)
-
-    except KeyboardInterrupt:
-        print("\nStopped.")
+if __name__ == '__main__':
+	try:
+		runExample()
+	except (KeyboardInterrupt, SystemExit) as exErr:
+		print("\nEnding Example")
+		sys.exit(0)

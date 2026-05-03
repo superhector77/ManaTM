@@ -43,7 +43,7 @@ from thrustangle_to_motorservo_sig import thrust_angle_to_motor_servo
 
 # ── SLAM script lives in its own subdirectory ──────────────────────────────────
 sys.path.insert(0, './SLAM_Script')
-from SLAM_Script.hardware_deploy import AutonomousNavigator   # your teammate's file
+from SLAM_Script.BuoyNav_ArucoSLAM_V1 import AutonomousNavigator   # your teammate's file
 
 # ── Shared sensor buffers (written by background threads, read by main loop) ───
 _lidar_buffer  = []          # list of [angle_deg, distance_m]

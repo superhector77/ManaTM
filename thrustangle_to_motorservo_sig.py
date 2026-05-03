@@ -30,6 +30,7 @@ def thrust_angle_to_motor_servo(thrust, prop_angle):
     servo_max = 180
     servo_range = 180
     
-    motor_sig = 0.5-((thrust-min_thrust/half_thrust-min_thrust)*0.5*motor_db)
+   # new
+    motor_sig = 0.5 - ((thrust - min_thrust) / (half_thrust - min_thrust) * 0.5 * motor_db)
     servo_sig = servo_max - servo_range * (prop_angle - min_prop_angle) / (max_prop_angle - min_prop_angle)
     return motor_sig, servo_sig
